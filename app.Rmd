@@ -130,6 +130,7 @@ output$urli <- renderUI({
 
 - SM-pitkä R1 2016 finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajat.html`
 - SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/lynxok77/kvaliajat.html` 
+- FinnSpring 2016 `http://www.finnspring.net/tulokset/valiajat.html`
 
 Column {data-width=600}
 -----------------------------------------------------------------------
