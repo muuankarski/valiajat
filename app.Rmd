@@ -1,0 +1,475 @@
+---
+title: "Väliaika-applikaatio"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: united
+    source_code: embed
+---
+
+```{r setup, include=FALSE, eval=TRUE}
+library(flexdashboard)
+library(shiny)
+library(tidyr)
+library(ggplot2)
+library(XML)
+library(dplyr)
+library(rvest)
+library(stringr)
+library(plotly)
+
+
+```
+
+
+
+Sidebar menu {.sidebar}
+=====================================
+
+### Valitse sarja
+
+```{r sarjaselect, eval=T}
+
+dataInput <- reactive({
+# sivu <- read_html("http://www.resultfellows.com/2016/lynxok77/valiajat.html")
+sivu <- read_html(input$kisan_urli)
+sarjat <- html_nodes(sivu, "h3") %>%
+  html_text() %>% 
+  str_extract("[a-öA-Ö0-9]+")
+tables <- html_nodes(sivu, "table.rvatbl") %>%
+  html_table()
+   list(sarjat,tables)
+})
+
+
+
+uiOutput("sarjat")
+
+output$sarjat <- renderUI({
+  
+  lista <- dataInput()
+  
+  sarjat <- lista[[1]]
+  list(selectInput("sarja_valittu",
+                   "Valitse sarja:",
+                    choices = sarjat, 
+                   selected = sarjat[1])
+       )
+})
+
+
+uiOutput("rivit")
+
+output$rivit <- renderUI({
+  
+  lista <- dataInput()
+
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)#, fixed=TRUE)
+  # nro <- grep("^H21$", x = sarjat), fixed=TRUE)
+  tbl <- tables[[nro]]
+  montako <- nrow(tbl)/2
+  
+  
+  list(sliderInput("rivit_valittu",
+                   "Valitse näytettävät sijat:",
+                    min = 1,
+                   max = 50, 
+                   value = c(1,10))
+       )
+})
+
+
+uiOutput("verrokit")
+
+output$verrokit <- renderUI({
+  
+  lista <- dataInput()
+
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)#, fixed=TRUE)
+  # nro <- grep("^H21$", x = sarjat), fixed=TRUE)
+  nimet <- tables[[nro]]$Nimi
+  nimet <- nimet[!nimet %in% ""]
+  
+  
+  list(selectInput("verrokit_valittu",
+                   "Valitse verrokkeja nimen perusteella:",
+                    choices=nimet,
+                   selected=nimet[11],multiple = TRUE)
+       )
+})
+
+
+```
+
+
+Tilanne rasteilla
+====================================
+
+```{r urli}
+uiOutput("urli")
+
+output$urli <- renderUI({
+  
+  
+  list(textInput("kisan_urli",width = "100%",
+                   "Liitä väliaikasivun url:",
+                 value="http://www.resultfellows.com/2016/lynxok77/valiajat.html")
+       )
+})
+```
+
+**Esimerkkejä:**
+
+- SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/jyry/valiajat.html`
+- SM-pitkä R1 2016 finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajat.html`
+- stadisprintti: `http://www.resultfellows.com/2016/jyry/valiajat.html`
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Sijoitukset rasteilla
+
+```{r sijat,eval=T}
+# plotOutput("sijat")
+plotlyOutput("sijat")
+
+output$sijat <- renderPlotly({
+# output$sijat <- renderPlot({
+  
+  lista <- dataInput()
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  
+  # nro <- grep(input$sarja_valittu, x = sarjat, fixed=TRUE)
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)
+  
+  tbl <- tables[[nro]]
+  tbl$Rata <- NULL
+  
+  library(zoo)
+  tbl$Nimi[tbl$Nimi %in% ""] <- NA
+  tbl$Nimi <- na.locf(tbl$Nimi)
+  
+  tbl$Sija[tbl$Sija %in% ""] <- NA
+  tbl$Sija <- na.locf(tbl$Sija)
+  tbl$Sija <- as.integer(gsub("[^0-9]","", tbl$Sija))
+  tbl$Sija[tbl$Sija ==""] <- NA
+  
+  tbl$type <- ifelse(duplicated(tbl$Nimi),"split","total")
+  
+  rastia <- length(names(tbl)[!names(tbl) %in% c("Sija","Nimi","Tulos","type")])/2
+  if (nchar(rastia) > 2) rastia <- rastia - .5
+  names(tbl)[names(tbl) %in% ""] <- 1:rastia
+  
+  names(tbl)[grepl("\\.",names(tbl))] <- paste0("aika_",1:rastia)
+  names(tbl)[grepl("^[0-9]+",names(tbl))] <- paste0("sijoitus_",1:rastia)
+  
+  tbl$Tulos <- NULL
+  
+  tbl2 <- gather(tbl, "rasti", "arvo", 3:(ncol(tbl)-1))
+  tbl3 <- tidyr::separate(data = tbl2, col = rasti, into = c("tyyppi","rasti"), sep = "_")
+  tbl4 <- spread(tbl3, key = tyyppi, value = arvo)
+  
+  tbl4$sijoitus <- as.integer(tbl4$sijoitus)
+  tbl4$rasti <- as.integer(tbl4$rasti)
+  
+  # aika
+  library(lubridate)
+  tbl4$aika2 <- ifelse(!grepl("[:]", tbl4$aika), paste0("0:",tbl4$aika),tbl4$aika)
+  tbl4$aika3 <- ifelse(!grepl(":[0-9]+:", tbl4$aika2), paste0("0:",tbl4$aika2),tbl4$aika2)
+  tbl4 <- tidyr::separate(tbl4, col = aika3, into = c("aika_h","aika_m","aika_s"), sep=":")
+  tbl4$aika_h <- as.integer(tbl4$aika_h)
+  tbl4$aika_m <- as.integer(tbl4$aika_m)
+  tbl4$aika_s <- as.integer(tbl4$aika_s)
+  
+  tbl4$kesto <- dhours(tbl4$aika_h) + dminutes(tbl4$aika_m) + dseconds(tbl4$aika_s)
+  tbl4$kesto <- as.numeric(tbl4$kesto)
+  
+ df1 <- tbl4[tbl4$type == "total" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
+ df2 <- tbl4[tbl4$type == "total" & tbl4$Nimi %in% input$verrokit_valittu,]
+  df <- rbind(df1,df2)
+  
+  p <- ggplot(data=df, aes(x=rasti,y=sijoitus,color=Nimi)) 
+  p <- p + geom_point() + geom_line()
+  p <- p + theme(legend.position="none")
+  p <- p + scale_y_reverse()
+  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
+  p <- p + geom_text(data=df %>% 
+                       dplyr::filter(rasti == rastia),
+                     aes(x=rasti,y=sijoitus,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+  p <- p + coord_cartesian(xlim=c(1,rastia+1))
+  p <- p + labs(title=sarjat[nro])
+  ggplotly(p)
+  # print(p)
+
+  })
+```
+
+
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Ajan kertymä rasteilla (sekunteina)
+
+```{r ajat,eval=T}
+# plotOutput("ajat")
+plotlyOutput("ajat")
+
+output$ajat <- renderPlotly({
+# output$ajat <- renderPlot({
+  
+  lista <- dataInput()
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  
+  # nro <- grep(input$sarja_valittu, x = sarjat, fixed=TRUE)
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)
+  
+  tbl <- tables[[nro]]
+  tbl$Rata <- NULL
+  
+  library(zoo)
+  tbl$Nimi[tbl$Nimi %in% ""] <- NA
+  tbl$Nimi <- na.locf(tbl$Nimi)
+  
+  tbl$Sija[tbl$Sija %in% ""] <- NA
+  tbl$Sija <- na.locf(tbl$Sija)
+  tbl$Sija <- as.integer(gsub("[^0-9]","", tbl$Sija))
+  tbl$Sija[tbl$Sija ==""] <- NA
+  
+  tbl$type <- ifelse(duplicated(tbl$Nimi),"split","total")
+  
+  rastia <- length(names(tbl)[!names(tbl) %in% c("Sija","Nimi","Tulos","type")])/2
+  names(tbl)[names(tbl) %in% ""] <- 1:rastia
+  
+  names(tbl)[grepl("\\.",names(tbl))] <- paste0("aika_",1:rastia)
+  names(tbl)[grepl("^[0-9]+",names(tbl))] <- paste0("sijoitus_",1:rastia)
+  
+  tbl$Tulos <- NULL
+  
+  tbl2 <- gather(tbl, "rasti", "arvo", 3:(ncol(tbl)-1))
+  tbl3 <- tidyr::separate(data = tbl2, col = rasti, into = c("tyyppi","rasti"), sep = "_")
+  tbl4 <- spread(tbl3, key = tyyppi, value = arvo)
+  
+  tbl4$sijoitus <- as.integer(tbl4$sijoitus)
+  tbl4$rasti <- as.integer(tbl4$rasti)
+  
+  # aika
+  library(lubridate)
+  tbl4$aika2 <- ifelse(!grepl("[:]", tbl4$aika), paste0("0:",tbl4$aika),tbl4$aika)
+  tbl4$aika3 <- ifelse(!grepl(":[0-9]+:", tbl4$aika2), paste0("0:",tbl4$aika2),tbl4$aika2)
+  tbl4 <- tidyr::separate(tbl4, col = aika3, into = c("aika_h","aika_m","aika_s"), sep=":")
+  tbl4$aika_h <- as.integer(tbl4$aika_h)
+  tbl4$aika_m <- as.integer(tbl4$aika_m)
+  tbl4$aika_s <- as.integer(tbl4$aika_s)
+  
+  tbl4$kesto <- dhours(tbl4$aika_h) + dminutes(tbl4$aika_m) + dseconds(tbl4$aika_s)
+  tbl4$kesto <- as.numeric(tbl4$kesto)
+  
+  tbl4 <- arrange(tbl4, -Sija)
+  
+   df1 <- tbl4[tbl4$type == "total" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
+ df2 <- tbl4[tbl4$type == "total" & tbl4$Nimi %in% input$verrokit_valittu,]
+  df <- rbind(df1,df2)
+  
+  p <- ggplot(data=df, aes(x=rasti,y=kesto,color=Nimi)) 
+  p <- p + geom_point() + geom_line()
+  p <- p + theme(legend.position="none")
+  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
+  p <- p + geom_text(data=df %>% 
+                       dplyr::filter(rasti == rastia),
+                     aes(x=rasti,y=kesto,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+  p <- p + coord_cartesian(xlim=c(1,rastia+1))
+  p <- p + labs(title=sarjat[nro])
+  ggplotly(p)
+
+  })
+```
+
+
+
+Rastiväliajat
+====================================
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+
+### Sijoitukset rastiväleillä
+
+```{r sijat_vajat,eval=T}
+# plotOutput("sijat")
+plotlyOutput("sijatv")
+
+output$sijatv <- renderPlotly({
+# output$sijat <- renderPlot({
+  
+  lista <- dataInput()
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  
+  # nro <- grep(input$sarja_valittu, x = sarjat, fixed=TRUE)
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)
+
+  tbl <- tables[[nro]]
+  tbl$Rata <- NULL
+  
+  library(zoo)
+  tbl$Nimi[tbl$Nimi %in% ""] <- NA
+  tbl$Nimi <- na.locf(tbl$Nimi)
+  
+  tbl$Sija[tbl$Sija %in% ""] <- NA
+  tbl$Sija <- na.locf(tbl$Sija)
+  tbl$Sija <- as.integer(gsub("[^0-9]","", tbl$Sija))
+  tbl$Sija[tbl$Sija ==""] <- NA
+  
+  tbl$type <- ifelse(duplicated(tbl$Nimi),"split","total")
+  
+  rastia <- length(names(tbl)[!names(tbl) %in% c("Sija","Nimi","Tulos","type")])/2
+  names(tbl)[names(tbl) %in% ""] <- 1:rastia
+  
+  names(tbl)[grepl("\\.",names(tbl))] <- paste0("aika_",1:rastia)
+  names(tbl)[grepl("^[0-9]+",names(tbl))] <- paste0("sijoitus_",1:rastia)
+  
+  tbl$Tulos <- NULL
+  
+  tbl2 <- gather(tbl, "rasti", "arvo", 3:(ncol(tbl)-1))
+  tbl3 <- tidyr::separate(data = tbl2, col = rasti, into = c("tyyppi","rasti"), sep = "_")
+  tbl4 <- spread(tbl3, key = tyyppi, value = arvo)
+  
+  tbl4$sijoitus <- as.integer(tbl4$sijoitus)
+  tbl4$rasti <- as.integer(tbl4$rasti)
+  
+  # aika
+  library(lubridate)
+  tbl4$aika2 <- ifelse(!grepl("[:]", tbl4$aika), paste0("0:",tbl4$aika),tbl4$aika)
+  tbl4$aika3 <- ifelse(!grepl(":[0-9]+:", tbl4$aika2), paste0("0:",tbl4$aika2),tbl4$aika2)
+  tbl4 <- tidyr::separate(tbl4, col = aika3, into = c("aika_h","aika_m","aika_s"), sep=":")
+  tbl4$aika_h <- as.integer(tbl4$aika_h)
+  tbl4$aika_m <- as.integer(tbl4$aika_m)
+  tbl4$aika_s <- as.integer(tbl4$aika_s)
+  
+  tbl4$kesto <- dhours(tbl4$aika_h) + dminutes(tbl4$aika_m) + dseconds(tbl4$aika_s)
+  tbl4$kesto <- as.numeric(tbl4$kesto)
+  
+  df1 <- tbl4[tbl4$type == "split" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
+ df2 <- tbl4[tbl4$type == "split" & tbl4$Nimi %in% input$verrokit_valittu,]
+  df <- rbind(df1,df2)
+  
+  p <- ggplot(data=df, aes(x=rasti,y=sijoitus,color=Nimi)) 
+  p <- p + geom_point() + geom_line()
+  p <- p + theme(legend.position="none")
+  p <- p + scale_y_reverse()
+  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
+  p <- p + geom_text(data=df %>% 
+                       dplyr::filter(rasti == rastia),
+                     aes(x=rasti,y=sijoitus,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+  p <- p + coord_cartesian(xlim=c(1,rastia+1))
+  p <- p + labs(title=sarjat[nro])
+  ggplotly(p)
+
+  })
+```
+
+
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Rastivälien ajat (normalisoitu valittujen juoksijoiden aikojen suhteen)
+
+```{r ajat_vajat,eval=T}
+# plotOutput("ajat")
+plotlyOutput("ajatv")
+
+output$ajatv <- renderPlotly({
+# output$ajat <- renderPlot({
+  
+  lista <- dataInput()
+  sarjat <- lista[[1]]
+  tables <- lista[[2]]
+  
+  # nro <- grep(input$sarja_valittu, x = sarjat, fixed=TRUE)
+  nro <- grep(paste0("^",input$sarja_valittu,"$"), x = sarjat)
+  
+  tbl <- tables[[nro]]
+  tbl$Rata <- NULL
+  
+  library(zoo)
+  tbl$Nimi[tbl$Nimi %in% ""] <- NA
+  tbl$Nimi <- na.locf(tbl$Nimi)
+  
+  tbl$Sija[tbl$Sija %in% ""] <- NA
+  tbl$Sija <- na.locf(tbl$Sija)
+  tbl$Sija <- as.integer(gsub("[^0-9]","", tbl$Sija))
+  tbl$Sija[tbl$Sija ==""] <- NA
+  
+  tbl$type <- ifelse(duplicated(tbl$Nimi),"split","total")
+  
+  rastia <- length(names(tbl)[!names(tbl) %in% c("Sija","Nimi","Tulos","type")])/2
+  names(tbl)[names(tbl) %in% ""] <- 1:rastia
+  
+  names(tbl)[grepl("\\.",names(tbl))] <- paste0("aika_",1:rastia)
+  names(tbl)[grepl("^[0-9]+",names(tbl))] <- paste0("sijoitus_",1:rastia)
+  
+  tbl$Tulos <- NULL
+  
+  tbl2 <- gather(tbl, "rasti", "arvo", 3:(ncol(tbl)-1))
+  tbl3 <- tidyr::separate(data = tbl2, col = rasti, into = c("tyyppi","rasti"), sep = "_")
+  tbl4 <- spread(tbl3, key = tyyppi, value = arvo)
+  
+  tbl4$sijoitus <- as.integer(tbl4$sijoitus)
+  tbl4$rasti <- as.integer(tbl4$rasti)
+  
+  # aika
+  library(lubridate)
+  tbl4$aika2 <- ifelse(!grepl("[:]", tbl4$aika), paste0("0:",tbl4$aika),tbl4$aika)
+  tbl4$aika3 <- ifelse(!grepl(":[0-9]+:", tbl4$aika2), paste0("0:",tbl4$aika2),tbl4$aika2)
+  tbl4 <- tidyr::separate(tbl4, col = aika3, into = c("aika_h","aika_m","aika_s"), sep=":")
+  tbl4$aika_h <- as.integer(tbl4$aika_h)
+  tbl4$aika_m <- as.integer(tbl4$aika_m)
+  tbl4$aika_s <- as.integer(tbl4$aika_s)
+  
+  tbl4$kesto <- dhours(tbl4$aika_h) + dminutes(tbl4$aika_m) + dseconds(tbl4$aika_s)
+  tbl4$kesto <- as.numeric(tbl4$kesto)
+  
+    tbl4 <- arrange(tbl4, -Sija)
+  
+  df1 <- tbl4[tbl4$type == "split" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
+ df2 <- tbl4[tbl4$type == "split" & tbl4$Nimi %in% input$verrokit_valittu,]
+  df <- rbind(df1,df2)
+    
+  df <- df %>% group_by(rasti) %>% mutate(kesto = kesto/mean(kesto, na.rm=TRUE))
+  p <- ggplot(data=df, aes(x=rasti,y=kesto,color=Nimi)) 
+  p <- p + geom_point() + geom_line()
+  p <- p + theme(legend.position="none")
+  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
+  p <- p + geom_text(data=df %>% 
+                       dplyr::filter(rasti == rastia),
+                     aes(x=rasti,y=kesto,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+  p <- p + coord_cartesian(xlim=c(1,rastia+1))
+  p <- p + labs(title=sarjat[nro])
+  ggplotly(p)
+
+  })
+```
+
+
+Mikä juttu??
+=========================================
+
+Tämä on R-kielellä tehty applikaatio resultsfellowsien väliaika-html -tiedostojen parsimiseen ja visualisoimiseen. Syntyi kolmen tunnin koodaamisella epäonnistuneen SM pitkä R1:n karsinnan jälkeen.
+
+- Lisenssi: [MIT](https://opensource.org/licenses/MIT) eli tee mitä lystäät
+- Lähdekoodi: <https://github.com/muuankarski/valiajat>
+
+
+
+
