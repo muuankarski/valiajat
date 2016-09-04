@@ -461,7 +461,7 @@ output$ajatv <- renderPlotly({
 ```
 
 
-Mikä juttu??
+Mikä homma?
 =========================================
 
 Tämä on R-kielellä tehty applikaatio resultsfellowsien väliaika-html -tiedostojen parsimiseen ja visualisoimiseen. Syntyi kolmen tunnin koodaamisella epäonnistuneen SM pitkä R1:n karsinnan jälkeen.
@@ -469,9 +469,11 @@ Tämä on R-kielellä tehty applikaatio resultsfellowsien väliaika-html -tiedos
 - Lisenssi: [MIT](https://opensource.org/licenses/MIT) eli tee mitä lystäät
 - Lähdekoodi: <https://github.com/muuankarski/valiajat>
 
+**Kehitysehdotukset** Githubiin <https://github.com/muuankarski/valiajat/issues> olkoonkin että varmempaa on forkata projekti ja parannella sitä omiin nimiin. Tämä tuskin saa tämän enempää huomiota minulta!
+
 Meilaa: <a href="mailto:markuskainu@gmail.com?Subject=väliaika-applikaatio" target="_top">markuskainu@gmail.com</a>
 
-### Pari testiurlia
+**Pari testiurlia**
 
 - SM R2 keskimatka 2016 finaalit: `http://www.resultfellows.com/2016/keskir2/fvaliajat.html`
 - SM R2 keskimatka 2016 karsinta: `http://www.resultfellows.com/2016/keskir2/kvaliajat.html`
