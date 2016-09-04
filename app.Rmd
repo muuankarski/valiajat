@@ -1,5 +1,5 @@
 ---
-title: "Väliaika-applikaatio"
+title: "Väliajat"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -28,7 +28,9 @@ library(plotly)
 Sidebar menu {.sidebar}
 =====================================
 
-### Valitse sarja
+### Valitse sarja 
+
+#### (Odota hetki..)
 
 ```{r sarjaselect, eval=T}
 
@@ -124,10 +126,10 @@ output$urli <- renderUI({
 })
 ```
 
-**Esimerkkejä:**
+**Esimerkki-urleja:** - *kopioi yläpuolen tekstiboksiin!*
 
-- SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/jyry/valiajat.html`
 - SM-pitkä R1 2016 finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajat.html`
+- SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/lynxok77/kvaliajat.html` 
 
 Column {data-width=600}
 -----------------------------------------------------------------------
@@ -461,10 +463,10 @@ output$ajatv <- renderPlotly({
 ```
 
 
-Mikä homma?
+Info
 =========================================
 
-Tämä on R-kielellä tehty applikaatio resultsfellowsien väliaika-html -tiedostojen parsimiseen ja visualisoimiseen. Syntyi kolmen tunnin koodaamisella epäonnistuneen SM pitkä R1:n karsinnan jälkeen.
+Tämä on [R-kielellä](https://www.r-project.org/) tehty [shiny](http://shiny.rstudio.com/)-applikaatio [resultsfellowsien](http://www.resultfellows.com/) väliaika-html -tiedostojen parsimiseen ja visualisoimiseen. Syntyi kolmen tunnin koodaamisella epäonnistuneen SM pitkä R1:n karsinnan jälkeen.
 
 - Lisenssi: [MIT](https://opensource.org/licenses/MIT) eli tee mitä lystäät
 - Lähdekoodi: <https://github.com/muuankarski/valiajat>
