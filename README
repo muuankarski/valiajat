@@ -3,4 +3,6 @@ Väliaika-applikaatio
 
 Tämä on R-kielellä tehty applikaatio resultsfellowsien väliaika-html -tiedostojen parsimiseen ja visualisoimiseen. Syntyi kolmen tunnin koodaamisella epäonnistuneen SM pitkä R1:n karsinnan jälkeen.
 
+demo: <https://muuankarski.shinyapps.io/valiajat/>
+
 markuskainu@gmail.com
