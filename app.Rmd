@@ -120,13 +120,13 @@ output$urli <- renderUI({
   
   
   list(textInput("kisan_urli",width = "100%",
-                   "Liitä väliaikasivun url:",
+                   "Liitä väliaikasivun osoite (url):",
                  value="http://www.resultfellows.com/2016/lynxok77/valiajat.html")
        )
 })
 ```
 
-**Esimerkki-urleja:** - *kopioi yläpuolen tekstiboksiin!*
+**Esimerkkiosoitteita:** - *kopioi yläpuolen tekstiboksiin!*
 
 - SM-pitkä R1 2016 finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajat.html`
 - SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/lynxok77/kvaliajat.html` 
@@ -481,5 +481,6 @@ Meilaa: <a href="mailto:markuskainu@gmail.com?Subject=väliaika-applikaatio" tar
 - SM R2 keskimatka 2016 finaalit: `http://www.resultfellows.com/2016/keskir2/fvaliajat.html`
 - SM R2 keskimatka 2016 karsinta: `http://www.resultfellows.com/2016/keskir2/kvaliajat.html`
 - Stadisprintti 2016: `http://www.resultfellows.com/2016/jyry/valiajat.html`
-
+- Ankkurirastit 2016: `http://www.angelniemenankkuri.com/ankkurirastit_2016/valiajat.html`
+. hiihtosuunnistuksen SM-spring `http://www.resultfellows.com/2016/hausi/valiajatf.html`
 
