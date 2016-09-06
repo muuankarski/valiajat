@@ -184,7 +184,7 @@ output$urli <- renderUI({
 - SM-pitkä R1 2016 b-finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajatb.html`
 - SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/lynxok77/kvaliajat.html` 
 
-Column {data-width=600}
+Column {data-width=600}{.tabset}
 -----------------------------------------------------------------------
 
 ### Sijoitukset rasteilla
@@ -219,10 +219,7 @@ output$sijat <- renderPlotly({
 
 
 
-Column {data-width=600}
------------------------------------------------------------------------
-
-### Ajan kertymä rasteilla (sekunteina)
+### Ajan kertymä rasteilla. X-akselin rastien välit skaalattu valittujen suunnistajien rastivälien keston keskiarvon mukaan
 
 ```{r ajat,eval=T}
 plotlyOutput("ajat")
@@ -240,15 +237,17 @@ output$ajat <- renderPlotly({
   df2 <- tbl4[tbl4$type == "total" & tbl4$Nimi %in% input$verrokit_valittu,]
   df <- rbind(df1,df2)
   
-  p <- ggplot(data=df, aes(x=rasti,y=kesto,color=Nimi)) 
+  df <- df %>% group_by(rasti) %>% mutate(kesto_vali = mean(kesto, na.rm=TRUE))
+  
+  p <- ggplot(data=df, aes(x=kesto_vali,y=kesto,color=Nimi)) 
   p <- p + geom_point() + geom_line()
   p <- p + theme(legend.position="none")
-  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
-  p <- p + geom_text(data=df %>% 
-                       dplyr::filter(rasti == rastia),
-                     aes(x=rasti,y=kesto,label=Nimi), nudge_x = 1, size=3,alpha=.5)
-  p <- p + coord_cartesian(xlim=c(1,rastia+1))
-  p <- p + labs(title=sarja)
+  p <- p + scale_x_continuous(breaks= sort(unique(df$kesto_vali)), labels = sort(c(1:rastia)))  # Ticks from 0-10, every .25
+  p <- p + geom_text(data=df %>% group_by(Nimi) %>% 
+                       dplyr::filter(kesto == max(kesto)),
+                     aes(x=kesto_vali,y=kesto,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+  p <- p + coord_cartesian(xlim=c(1,max(df$kesto_vali)*1.05))
+  p <- p + labs(title=sarja, y="Kisan kesto sekunteina", x="rasti")
   ggplotly(p)
 
   })
@@ -259,7 +258,7 @@ output$ajat <- renderPlotly({
 Rastiväliajat
 ====================================
 
-Column {data-width=600}
+Column {data-width=600}{.tabset}
 -----------------------------------------------------------------------
 
 
@@ -295,9 +294,6 @@ output$sijatv <- renderPlotly({
 ```
 
 
-
-Column {data-width=600}
------------------------------------------------------------------------
 
 ### Rastivälien ajat (normalisoitu valittujen juoksijoiden aikojen suhteen)
 
