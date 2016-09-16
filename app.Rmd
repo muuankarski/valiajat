@@ -358,6 +358,8 @@ Tämä on [R-kielellä](https://www.r-project.org/) tehty [shiny](http://shiny.r
 
 **Kehitysehdotukset** Githubiin <https://github.com/muuankarski/valiajat/issues> olkoonkin että varmempaa on forkata projekti ja parannella sitä omiin nimiin. Tämä tuskin saa tämän enempää huomiota minulta!
 
+Uusia kisoja voi lisäillä tähän tiedostoon: <https://github.com/muuankarski/valiajat/blob/master/url.txt>
+
 Meilaa: <a href="mailto:markuskainu@gmail.com?Subject=väliaika-applikaatio" target="_top">markuskainu@gmail.com</a>
 
 
