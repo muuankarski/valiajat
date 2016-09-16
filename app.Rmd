@@ -7,6 +7,7 @@ output:
     vertical_layout: fill
     theme: united
     source_code: embed
+    css: styles.css
 ---
 
 ```{r setup, include=FALSE, eval=TRUE}
@@ -119,6 +120,7 @@ uiOutput("sarjat")
 
 output$sarjat <- renderUI({
   
+withProgress(message = 'Dataa murskataan... odota hetki', style = "notification", value = 0.1, {  
   lista <- dataInput()
   
   sarjat <- lista[[1]]
@@ -127,6 +129,7 @@ output$sarjat <- renderUI({
                     choices = sarjat, 
                    selected = sarjat[1])
        )
+})
 })
 
 
@@ -189,7 +192,6 @@ output$urli <- renderUI({
   
   kisat <- kisadata$kisa
   
-  
   # list(textInput("kisan_urli",width = "100%",
   #                  "Liitä väliaikasivun osoite (url):",
   #                value="http://www.resultfellows.com/2016/lynxok77/valiajata.html")
@@ -213,27 +215,34 @@ Column {data-width=600}{.tabset}
 plotlyOutput("sijat")
 
 output$sijat <- renderPlotly({
-
+  
+  
+  withProgress(message = 'Dataa murskataan... odota hetki', style = "notification", value = 0.1, {
   lista2 <- luo_kuvan_data()
-  tbl4 <- lista2[[1]]
-  rastia <- lista2[[2]]
-  sarja <- lista2[[3]]
   
-  df1 <- tbl4[tbl4$type == "total" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
-  df2 <- tbl4[tbl4$type == "total" & tbl4$Nimi %in% input$verrokit_valittu,]
-  df <- rbind(df1,df2)
   
-  p <- ggplot(data=df, aes(x=rasti,y=sijoitus,color=Nimi)) 
-  p <- p + geom_point() + geom_line()
-  p <- p + theme(legend.position="none")
-  p <- p + scale_y_reverse()
-  p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
-  p <- p + geom_text(data=df %>% 
-                       dplyr::filter(rasti == rastia),
-                     aes(x=rasti,y=sijoitus,label=Nimi), nudge_x = 1, size=3,alpha=.5)
-  p <- p + coord_cartesian(xlim=c(1,rastia+1))
-  p <- p + labs(title=sarja)
-  ggplotly(p)
+
+    
+    tbl4 <- lista2[[1]]
+    rastia <- lista2[[2]]
+    sarja <- lista2[[3]]
+    
+    df1 <- tbl4[tbl4$type == "total" & tbl4$Sija %in% input$rivit_valittu[1]:input$rivit_valittu[2],]
+    df2 <- tbl4[tbl4$type == "total" & tbl4$Nimi %in% input$verrokit_valittu,]
+    df <- rbind(df1,df2)
+    
+    p <- ggplot(data=df, aes(x=rasti,y=sijoitus,color=Nimi)) 
+    p <- p + geom_point() + geom_line()
+    p <- p + theme(legend.position="none")
+    p <- p + scale_y_reverse()
+    p <- p + scale_x_continuous(breaks=c(1:rastia))  # Ticks from 0-10, every .25
+    p <- p + geom_text(data=df %>% 
+                         dplyr::filter(rasti == rastia),
+                       aes(x=rasti,y=sijoitus,label=Nimi), nudge_x = 1, size=3,alpha=.5)
+    p <- p + coord_cartesian(xlim=c(1,rastia+1))
+    p <- p + labs(title=sarja)
+    ggplotly(p)
+  })
   })
 ```
 
@@ -246,6 +255,8 @@ plotlyOutput("ajat")
 
 output$ajat <- renderPlotly({
 
+  
+  withProgress(message = 'Dataa murskataan... odota hetki', style = "notification", value = 0.1, {
  lista2 <- luo_kuvan_data()
  tbl4 <- lista2[[1]]
  rastia <- lista2[[2]]
@@ -269,7 +280,7 @@ output$ajat <- renderPlotly({
   p <- p + coord_cartesian(xlim=c(1,max(df$kesto_vali)*1.05))
   p <- p + labs(title=sarja, y="Kisan kesto sekunteina", x="rasti")
   ggplotly(p)
-
+})
   })
 ```
 
@@ -288,6 +299,8 @@ Column {data-width=600}{.tabset}
 plotlyOutput("sijatv")
 
 output$sijatv <- renderPlotly({
+  
+  withProgress(message = 'Dataa murskataan... odota hetki', style = "notification", value = 0.1, {
 
    lista2 <- luo_kuvan_data()
    tbl4 <- lista2[[1]]
@@ -309,6 +322,7 @@ output$sijatv <- renderPlotly({
   p <- p + coord_cartesian(xlim=c(1,rastia+1))
   p <- p + labs(title=sarja)
   ggplotly(p)
+  })
 
   })
 ```
@@ -322,6 +336,8 @@ plotlyOutput("ajatv")
 
 output$ajatv <- renderPlotly({
   
+  
+  withProgress(message = 'Dataa murskataan... odota hetki', style = "notification", value = 0.1, {
   lista2 <- luo_kuvan_data()
   tbl4 <- lista2[[1]]
   rastia <- lista2[[2]]
@@ -344,6 +360,7 @@ output$ajatv <- renderPlotly({
   p <- p + coord_cartesian(xlim=c(1,rastia+1))
   p <- p + labs(title=sarja)
   ggplotly(p)
+  })
   })
 ```
 
