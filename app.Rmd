@@ -73,6 +73,21 @@ luo_kuvan_data <- function(srja=input$sarja_valittu){
   list(tbl4,rastia,srja)
 }
 
+
+# Luo kisalista
+kisadata <- read.table(file = "./url.txt", stringsAsFactors = FALSE)
+names(kisadata) <- c("kisa","url")
+# urls <- urls[!urls %in% ""]
+# kisadata <- data.frame()
+# for (i in 1:length(urls)){
+#   sivu <- read_html(urls[i])
+#   kisanimi <- html_nodes(sivu, "h2") %>% html_text()
+#   newrow <- data.frame(kisa=kisanimi,url=urls[i], stringsAsFactors=FALSE)
+#   kisadata <- rbind(kisadata,newrow)
+# }
+# kisadata$kisa <- ifelse(!duplicated(kisadata$kisa), paste(kisadata$kisa, "- 1"), paste(kisadata$kisa, "- 2"))
+
+
 ```
 
 
@@ -88,7 +103,8 @@ Sidebar menu {.sidebar}
 
 dataInput <- reactive({
 # sivu <- read_html("http://www.resultfellows.com/2016/lynxok77/valiajat.html")
-sivu <- read_html(input$kisan_urli)
+# sivu <- read_html(input$kisan_urli)
+sivu <- read_html(kisadata[kisadata$kisa %in% input$kisan_urli,]$url)
 sarjat <- html_nodes(sivu, "h3") %>%
   html_text() %>% 
   str_extract("[a-öA-Ö0-9]+")
@@ -171,18 +187,22 @@ uiOutput("urli")
 output$urli <- renderUI({
   
   
-  list(textInput("kisan_urli",width = "100%",
-                   "Liitä väliaikasivun osoite (url):",
-                 value="http://www.resultfellows.com/2016/lynxok77/valiajata.html")
+  kisat <- kisadata$kisa
+  
+  
+  # list(textInput("kisan_urli",width = "100%",
+  #                  "Liitä väliaikasivun osoite (url):",
+  #                value="http://www.resultfellows.com/2016/lynxok77/valiajata.html")
+  #      )
+  list(selectInput("kisan_urli",width = "100%",
+                   "Valitse kisa:",
+                 choices=kisat,
+                 selected=kisat[length(kisat)])
        )
+  
 })
 ```
 
-**Esimerkkiosoitteita:** - *kopioi yläpuolen tekstiboksiin!*
-
-- SM-pitkä R1 2016 a-finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajata.html`
-- SM-pitkä R1 2016 b-finaalit: `http://www.resultfellows.com/2016/lynxok77/valiajatb.html`
-- SM-pitkä R1 2016 karsinta: `http://www.resultfellows.com/2016/lynxok77/kvaliajat.html` 
 
 Column {data-width=600}{.tabset}
 -----------------------------------------------------------------------
@@ -340,11 +360,4 @@ Tämä on [R-kielellä](https://www.r-project.org/) tehty [shiny](http://shiny.r
 
 Meilaa: <a href="mailto:markuskainu@gmail.com?Subject=väliaika-applikaatio" target="_top">markuskainu@gmail.com</a>
 
-**Pari testiurlia**
-
-- SM R2 keskimatka 2016 finaalit: `http://www.resultfellows.com/2016/keskir2/fvaliajat.html`
-- SM R2 keskimatka 2016 karsinta: `http://www.resultfellows.com/2016/keskir2/kvaliajat.html`
-- Stadisprintti 2016: `http://www.resultfellows.com/2016/jyry/valiajat.html`
-- Ankkurirastit 2016: `http://www.angelniemenankkuri.com/ankkurirastit_2016/valiajat.html`
-. hiihtosuunnistuksen SM-spring `http://www.resultfellows.com/2016/hausi/valiajatf.html`
 
