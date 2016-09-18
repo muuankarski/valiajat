@@ -6,3 +6,5 @@
 "SM-pitkämatka Karsinta R1 Kirkkonummen Meikossa 3.-4.9.2016"     "http://www.resultfellows.com/2016/lynxok77/kvaliajat.html"
 "SM-sprintti 2017 Esikisat Kartanonkoskella - osa 1. 11.9.2016"   "http://www.resultfellows.com/2016/hs/valiajat1.html"
 "SM-sprintti 2017 Esikisat Kartanonkoskella - osa 2. 11.9.2016"   "http://www.resultfellows.com/2016/hs/valiajat2.html"
+"SM-sprint Karsinta 17.9.2016, Vaasan Suunnistajat"               "http://www.kokkens.fi/kilpailut/2016/smsprintti/vali1.html"
+"SM-sprint Finaali 17.9.2016, Vaasan Suunnistajat"                "http://www.kokkens.fi/kilpailut/2016/smsprintti/vali2.html"
